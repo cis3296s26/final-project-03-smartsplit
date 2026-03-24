@@ -1,21 +1,29 @@
-# Project Name
-Put here a short paragraph describing your project. 
-Adding an screenshot or a mockup of your application in action would be nice.  
+# SmartSplit
+SmartSplit is a web application that helps college roommates efficiently navigate shared living expenses from rent to groceries to fun night out spending! 
 
 ![This is a screenshot.](images.png)
-# How to run
-Provide here instructions on how to use your application.   
-- Download the latest binary from the Release section on the right on GitHub.  
-- On the command line uncompress using
+# How to run  
+1. Clone the repo using command  
 ```
-tar -xzf  
+git clone https://github.com/yourusername/smartsplit.git
+cd smartsplit 
 ```
-- On the command line run with
+2. Install dependencies
+- Run these two commands for backend
 ```
-./hello
+cd backend
+npm install
 ```
-- You will see Hello World! on your terminal. 
-
+- Now run these 2 for frontend
+```
+cd ../frontend
+npm install
+```
+3. Set up the database
+- Use the file provided named schema.sql and run
+```
+SOURCE schema.sql;
+```
 # How to contribute
 Follow this project board to know the latest status of the project: [http://...]([http://...])  
 
