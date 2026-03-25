@@ -4,8 +4,8 @@ SmartSplit is a web application that helps college roommates efficiently navigat
 ![This is a screenshot.](images.png)
 # How to run  
 - REQUIREMENTS
-  Node.js
-  npm
+  - Node.js
+  - npm
 1. Clone the repo using command  
 ```
 git clone https://github.com/yourusername/smartsplit.git
@@ -37,13 +37,10 @@ node server.js
 cd frontend
 npm start
 ```
-# How to contribute
-Follow this project board to know the latest status of the project: [http://...]([http://...])  
+# Now you are ready to use SmartSplit!
+You can...
+  - Create a household
+  - Add members
+  - Log expenses
+  - View balances
 
-### How to build
-- Use this github repository: ... 
-- Specify what branch to use for a more stable release or for cutting edge development.  
-- Use InteliJ 11
-- Specify additional library to download if needed 
-- What file and target to compile and run. 
-- What is expected to happen when the app start. 
