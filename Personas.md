@@ -95,6 +95,19 @@ Very Busy no time to discuss expenses.
 Busy Student that often loses track of who has paid so far and who hasn't.
 Wants to make sure that everyone pays correctly as she does not have a lot of money and is in debt.
 
+*** Mark - Cautious Roommate ***
+Age: 21
+Occupation: Part Time at Trader Joe's while in school
+Education: Getting a degree in Economics
 
+Technology Experience:
+- Uses a phone to keep up with friends and social media
+- Uses a computer for schoolwork primarily
 
+Demographics: Lives in off campus apartment with 3 other roommates
 
+Why they would use SmartSplit:
+Mark had a poor experience with previous roommates that led him to move out
+and find a new place.  Sharing expenses was a task and tracking everyone’s fair
+share was laborious. With SmartSplit, Mark feels secure that his new living
+situation will not have the same issues.
