@@ -1,6 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./App.css";
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/mysql2';
+import { eq } from 'drizzle-orm';
+import { Household } from './src/db/schema';
 
 function HomePage() {
   const navigate = useNavigate();
