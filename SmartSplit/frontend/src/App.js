@@ -1,5 +1,5 @@
+import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import "./App.css";
 
 function HomePage() {
@@ -32,10 +32,10 @@ function HomePage() {
             </button>
 
             <button
-            className="primary-button"
-            onClick={() => navigate("/households")}
+              className="primary-button"
+              onClick={() => navigate("/households")}
             >
-            My Households
+              My Households
             </button>
           </div>
         </div>
@@ -55,8 +55,8 @@ function CreateHouseholdPage() {
   const handleRoommateCountChange = (e) => {
     const count = Math.max(1, parseInt(e.target.value) || 1);
     setNumRoommates(count);
-    setRoommateNames(
-      Array.from({ length: count }, (_, i) => roommateNames[i] || "")
+    setRoommateNames((prev) =>
+      Array.from({ length: count }, (_, i) => prev[i] || "")
     );
   };
 
@@ -71,9 +71,48 @@ function CreateHouseholdPage() {
     setHouseholdKey(key);
   };
 
-  const copyKey = () => {
-    navigator.clipboard.writeText(householdKey);
-    alert("Household key copied!");
+  const copyKey = async () => {
+    if (!householdKey) return;
+    try {
+      await navigator.clipboard.writeText(householdKey);
+      alert("Key copied to clipboard");
+    } catch {
+      alert("Copy failed");
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!householdName || !householdKey) {
+      alert("Please provide a household name and generate a key.");
+      return;
+    }
+
+    const payload = {
+      householdName,
+      householdKey,
+      numRoommates,
+      roommateNames,
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:5001/households", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert("Household created (id: " + data.id + ")");
+        navigate("/");
+      } else {
+        const err = await res.json().catch(() => null);
+        alert("Create failed: " + (err?.error || res.statusText));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Network error: could not reach backend");
+    }
   };
 
   return (
@@ -135,7 +174,9 @@ function CreateHouseholdPage() {
             )}
 
             <div className="button-row">
-              <button className="primary-button">Create</button>
+              <button className="primary-button" onClick={handleCreate}>
+                Create
+              </button>
               <button className="ghost-button" onClick={() => navigate("/")}>
                 Cancel
               </button>
@@ -155,9 +196,7 @@ function JoinHouseholdPage() {
       <div className="App-header">
         <div className="empty-state">
           <h1 className="page-title">Join Household</h1>
-          <p>
-            Still under Constructioen.
-          </p>
+          <p>Still under construction.</p>
           <button className="ghost-button" onClick={() => navigate("/")}>
             Back Home
           </button>
