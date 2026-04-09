@@ -1,10 +1,6 @@
+import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import "./App.css";
-import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/mysql2';
-import { eq } from 'drizzle-orm';
-import { Household } from './src/db/schema';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -34,10 +30,10 @@ function CreateHouseholdPage() {
   const [householdKey, setHouseholdKey] = useState("");
 
   const handleRoommateCountChange = (e) => {
-    const count = parseInt(e.target.value) || 1;
+    const count = Math.max(1, parseInt(e.target.value) || 1);
     setNumRoommates(count);
-    setRoommateNames(
-      Array.from({ length: count }, (_, i) => roommateNames[i] || "")
+    setRoommateNames((prev) =>
+      Array.from({ length: count }, (_, i) => prev[i] || "")
     );
   };
 
@@ -52,18 +48,57 @@ function CreateHouseholdPage() {
     setHouseholdKey(key);
   };
 
-  const copyKey = () => {
-    navigator.clipboard.writeText(householdKey);
-    alert("Household key copied!");
+  const copyKey = async () => {
+    if (!householdKey) return;
+    try {
+      await navigator.clipboard.writeText(householdKey);
+      alert("Key copied to clipboard");
+    } catch {
+      alert("Copy failed");
+    }
   };
 
   const navigate = useNavigate();
+
+  const handleCreate = async () => {
+    if (!householdName || !householdKey) {
+      alert("Please provide a household name and generate a key.");
+      return;
+    }
+
+    const payload = {
+      householdName,
+      householdKey,
+      numRoommates,
+      roommateNames,
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:5001/households", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert("Household created (id: " + data.id + ")");
+        navigate("/");
+      } else {
+        const err = await res.json().catch(() => null);
+        alert("Create failed: " + (err?.error || res.statusText));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Network error: could not reach backend");
+    }
+  };
 
   return (
     <div className="App">
       <div className="App-header">
         <div className="create-container">
-          <h1>Create Household</h1> 
+          <h1>Create Household</h1>
 
           <input
             type="text"
@@ -94,13 +129,15 @@ function CreateHouseholdPage() {
 
           {householdKey && (
             <div className="key-box">
-              <p><strong>Household Key:</strong> {householdKey}</p>
+              <p>
+                <strong>Household Key:</strong> {householdKey}
+              </p>
               <button onClick={copyKey}>Copy Key</button>
             </div>
           )}
 
           <div className="button-row">
-            <button>Create</button>
+            <button onClick={handleCreate}>Create</button>
             <button onClick={() => navigate("/")}>Cancel</button>
           </div>
         </div>

@@ -13,13 +13,21 @@ let dbInstance: ReturnType<typeof drizzle> | null = null;
 
 export async function initDb() {
   if (dbInstance) return dbInstance;
-  // try pool first
-  const pool = mysql.createPool(url);
-  // quick sanity check connection
-  const conn = await pool.getConnection();
-  conn.release();
-  dbInstance = drizzle(pool);
-  return dbInstance;
+
+  const pool = mysql.createPool(url as string);
+  let conn = null;
+  try {
+    conn = await pool.getConnection();
+    dbInstance = drizzle(pool as unknown as any) as ReturnType<typeof drizzle>;
+    return dbInstance;
+  } catch (err) {
+    console.error('DB init error:', err);
+    throw err;
+  } finally {
+    if (conn) {
+      try { conn.release(); } catch {}
+    }
+  }
 }
 
 export default initDb;
