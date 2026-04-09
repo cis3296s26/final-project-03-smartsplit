@@ -1,12 +1,28 @@
-const express = require("express");
+const express = require('express');
 const app = express();
+
+const cors = require('cors');
+app.use(cors({ origin: 'http://localhost:3000' }));
 
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("SmartSplit backend running");
+// Routes
+const userRoutes = require('./routes/users');
+const householdRoutes = require('./routes/households');
+const expenseRoutes = require('./routes/expenses');
+const paymentRoutes = require('./routes/payments');
+const notificationRoutes = require('./routes/notifications');
+
+app.use('/api/users', userRoutes);
+app.use('/api/households', householdRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/notifications', notificationRoutes);
+
+// Test route
+app.get('/', (req, res) => {
+  res.send('SmartSplit API is running');
 });
 
-app.listen(5000, "127.0.0.1", () => {
-  console.log("Server running on http://127.0.0.1:5000");
-});
+const PORT = 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
