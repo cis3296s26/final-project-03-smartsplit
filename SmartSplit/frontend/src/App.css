@@ -255,6 +255,13 @@ button:active {
   .button-row {
     flex-direction: column;
   }
+
+}
+
+@media (max-width: 700px) {
+  .team-container {
+    grid-template-columns: 1fr;
+  }
 }
 
 
@@ -265,11 +272,10 @@ button:active {
 }
 
 .team-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
-
 .team-member {
   padding: 16px;
   border-radius: 12px;
