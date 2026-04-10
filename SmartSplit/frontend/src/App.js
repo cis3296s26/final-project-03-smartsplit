@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import "./App.css";
+import aboutIcon from "./images/about.jpeg";
 
 function HomePage() {
   const navigate = useNavigate();
@@ -8,6 +9,13 @@ function HomePage() {
   return (
     <div className="App">
       <header className="App-header">
+        <button
+          className="info-button"
+          onClick={() => navigate("/about")}
+        >
+          <img src={aboutIcon} alt="About" className="info-icon" />
+        </button>
+
         <div className="hero-card">
           <div className="brand-badge">SmartSplit</div>
           <h1 className="hero-title">Split expenses without the stress</h1>
@@ -244,6 +252,80 @@ function MyHouseholdsPage() {
   );
 }
 
+function AboutPage() {
+  const navigate = useNavigate();
+
+  const team = [
+    {
+      name: "Akil",
+      role: "Frontend Development & UI Design",
+      email: "akil@email.com",
+      phone: "(123) 456-7890",
+    },
+    {
+      name: "Fabrizio",
+      role: "Frontend Development & UI Design",
+      email: "fabrizio@email.com",
+      phone: "(123) 456-7890",
+    },
+    {
+      name: "Jillian",
+      role: "Database & API Integration",
+      email: "jillian@email.com",
+      phone: "(123) 456-7890",
+    },
+    {
+      name: "Serge",
+      role: "Backend/API",
+      email: "serge@email.com",
+      phone: "(123) 456-7890",
+    },
+    {
+      name: "Nate",
+      role: "Backend/API",
+      email: "nate@email.com",
+      phone: "(123) 456-7890",
+    },
+  ];
+
+  return (
+    <div className="App">
+      <div className="App-header">
+        <div className="page-card">
+          <h1 className="page-title">About SmartSplit</h1>
+
+          <p className="page-subtitle">
+            SmartSplit helps roommates manage and split shared expenses easily.
+            Our goal is to simplify financial organization and reduce confusion
+            around shared household costs.
+          </p>
+
+          <div className="team-container">
+            {team.map((member, index) => (
+              <div className="team-member" key={index}>
+                <h3>{member.name}</h3>
+                <p className="role">{member.role}</p>
+                <div className="contact">
+                  <span>Email: {member.email}</span>
+                </div>
+                <div className="contact">
+                  <span>Phone: {member.phone}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: "16px" }}>
+            <button className="ghost-button" onClick={() => navigate("/")}>
+              Back Home
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -252,6 +334,7 @@ function App() {
         <Route path="/create" element={<CreateHouseholdPage />} />
         <Route path="/join" element={<JoinHouseholdPage />} />
         <Route path="/households" element={<MyHouseholdsPage />} />
+        <Route path="/about" element={<AboutPage />} />
       </Routes>
     </Router>
   );
