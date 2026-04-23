@@ -4,8 +4,8 @@ const cors = require("cors");
 const mysql = require('mysql2/promise');
 
 const userRoutes = require('./routes/users');
-const householdRoutes = require('./routes/households');
-const expenseRoutes = require('./routes/expenses');
+//const householdRoutes = require('./routes/households');
+//const expenseRoutes = require('./routes/expenses');
 
 const app = express();
 app.use(cors());
@@ -23,8 +23,8 @@ app.get("/", (req, res) => {
 });
 
 app.use('/api/users', userRoutes);
-app.use('/api/households', householdRoutes);
-app.use('/api/expenses', expenseRoutes);
+//app.use('/api/households', householdRoutes);
+//app.use('/api/expenses', expenseRoutes);
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, "127.0.0.1", () => {
