@@ -1,7 +1,15 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import "./App.css";
 import aboutIcon from "./images/about.jpeg";
+
+const API_BASE = "http://127.0.0.1:5001/api";
 
 function HomePage() {
   const navigate = useNavigate();
@@ -9,10 +17,7 @@ function HomePage() {
   return (
     <div className="App">
       <header className="App-header">
-        <button
-          className="info-button"
-          onClick={() => navigate("/about")}
-        >
+        <button className="info-button" onClick={() => navigate("/about")}>
           <img src={aboutIcon} alt="About" className="info-icon" />
         </button>
 
@@ -25,24 +30,15 @@ function HomePage() {
           </p>
 
           <div className="button-stack">
-            <button
-              className="primary-button"
-              onClick={() => navigate("/create")}
-            >
+            <button className="primary-button" onClick={() => navigate("/create")}>
               Create Household
             </button>
 
-            <button
-              className="primary-button"
-              onClick={() => navigate("/join")}
-            >
+            <button className="primary-button" onClick={() => navigate("/join")}>
               Join Household
             </button>
 
-            <button
-              className="primary-button"
-              onClick={() => navigate("/households")}
-            >
+            <button className="primary-button" onClick={() => navigate("/households")}>
               My Households
             </button>
           </div>
@@ -57,7 +53,6 @@ function CreateHouseholdPage() {
   const [numRoommates, setNumRoommates] = useState(1);
   const [roommateNames, setRoommateNames] = useState([""]);
   const [householdKey, setHouseholdKey] = useState("");
-
   const navigate = useNavigate();
 
   const handleRoommateCountChange = (e) => {
@@ -81,6 +76,7 @@ function CreateHouseholdPage() {
 
   const copyKey = async () => {
     if (!householdKey) return;
+
     try {
       await navigator.clipboard.writeText(householdKey);
       alert("Key copied to clipboard");
@@ -90,36 +86,48 @@ function CreateHouseholdPage() {
   };
 
   const handleCreate = async () => {
-    if (!householdName || !householdKey) {
-      alert("Please provide a household name and generate a key.");
+    const cleanedNames = roommateNames.map((name) => name.trim()).filter(Boolean);
+
+    if (!householdName.trim()) {
+      alert("Please enter a household name.");
       return;
     }
 
-    const payload = {
-      householdName,
-      householdKey,
-      numRoommates,
-      roommateNames,
-    };
+    if (!householdKey.trim()) {
+      alert("Please generate a household key.");
+      return;
+    }
+
+    if (cleanedNames.length !== numRoommates) {
+      alert("Please enter all roommate names.");
+      return;
+    }
 
     try {
-      const res = await fetch("http://127.0.0.1:5001/households", {
+      const res = await fetch(`${API_BASE}/households`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          householdName: householdName.trim(),
+          householdKey: householdKey.trim(),
+          numRoommates,
+          roommateNames: cleanedNames,
+        }),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (res.ok) {
-        const data = await res.json();
-        alert("Household created (id: " + data.id + ")");
-        navigate("/");
+        alert("Household created successfully!");
+        navigate("/households");
       } else {
-        const err = await res.json().catch(() => null);
-        alert("Create failed: " + (err?.error || res.statusText));
+        alert("Create failed: " + (data.error || res.statusText));
       }
-    } catch (e) {
-      console.error(e);
-      alert("Network error: could not reach backend");
+    } catch (error) {
+      console.error(error);
+      alert("Network error: could not reach backend.");
     }
   };
 
@@ -148,7 +156,6 @@ function CreateHouseholdPage() {
               <input
                 type="number"
                 min="1"
-                placeholder="Enter number of roommates"
                 value={numRoommates}
                 onChange={handleRoommateCountChange}
               />
@@ -198,19 +205,39 @@ function CreateHouseholdPage() {
 
 function JoinHouseholdPage() {
   const navigate = useNavigate();
-
   const [householdKey, setHouseholdKey] = useState("");
   const [memberName, setMemberName] = useState("");
 
   const handleJoin = async () => {
-    if (!householdKey || !memberName) {
+    if (!householdKey.trim() || !memberName.trim()) {
       alert("Please enter your name and household key.");
       return;
     }
 
-  
-    alert(`Joining household ${householdKey} as ${memberName}`);
-    navigate("/households");
+    try {
+      const res = await fetch(`${API_BASE}/households/join`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          householdKey: householdKey.trim(),
+          memberName: memberName.trim(),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        alert("Joined household successfully!");
+        navigate(`/expenses/${data.householdId}`);
+      } else {
+        alert("Join failed: " + (data.error || res.statusText));
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Network error: could not reach backend.");
+    }
   };
 
   return (
@@ -260,34 +287,228 @@ function JoinHouseholdPage() {
 
 function MyHouseholdsPage() {
   const navigate = useNavigate();
+  const [households, setHouseholds] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const households = [
-    { name: "Temple Apartment", key: "ABCD1234" },
-    { name: "Summer House", key: "XYZ7890" },
-  ];
+  const loadHouseholds = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/households`);
+      const data = await res.json();
+      setHouseholds(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error(error);
+      alert("Could not load households.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHouseholds();
+  }, []);
 
   return (
     <div className="App">
       <div className="App-header">
         <div className="page-card">
           <h1 className="page-title">My Households</h1>
+          <p className="page-subtitle">View and manage your households.</p>
+
+          <div className="create-container">
+            {loading ? (
+              <p>Loading households...</p>
+            ) : households.length === 0 ? (
+              <div className="empty-state">
+                <p>No households found.</p>
+                <button className="primary-button" onClick={() => navigate("/create")}>
+                  Create Household
+                </button>
+              </div>
+            ) : (
+              households.map((household) => (
+                <div
+                  className="household-card clickable-card"
+                  key={household.householdId}
+                  onClick={() => navigate(`/expenses/${household.householdId}`)}
+                >
+                  <h3>{household.name}</h3>
+                  <p>Key: {household.householdKey}</p>
+                  <p>Members: {household.memberCount}</p>
+                </div>
+              ))
+            )}
+
+            <button className="ghost-button" onClick={() => navigate("/")}>
+              Back Home
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExpensesPage() {
+  const { householdId } = useParams();
+  const navigate = useNavigate();
+
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("Other");
+
+  const loadExpenses = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/expenses/household/${householdId}`);
+      const data = await res.json();
+      setExpenses(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error(error);
+      alert("Could not load expenses.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadExpenses();
+  }, [householdId]);
+
+  const addExpense = async () => {
+    if (!description.trim() || !amount) {
+      alert("Please enter a description and amount.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/expenses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          description: description.trim(),
+          amount: Number(amount),
+          category,
+          householdId,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        setDescription("");
+        setAmount("");
+        setCategory("Other");
+        await loadExpenses();
+      } else {
+        alert("Add expense failed: " + (data.error || res.statusText));
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Network error: could not reach backend.");
+    }
+  };
+
+  const deleteExpense = async (expenseId) => {
+    try {
+      const res = await fetch(`${API_BASE}/expenses/${expenseId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        await loadExpenses();
+      } else {
+        alert("Delete failed.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Network error: could not reach backend.");
+    }
+  };
+
+  const total = expenses.reduce((sum, expense) => {
+    return sum + Number(expense.amount || 0);
+  }, 0);
+
+  return (
+    <div className="App">
+      <div className="App-header">
+        <div className="page-card">
+          <h1 className="page-title">Expenses</h1>
           <p className="page-subtitle">
-            View and manage your households.
+            Add and view shared expenses for this household.
           </p>
 
           <div className="create-container">
-            {households.map((h, index) => (
-              <div className="household-card" key={index}>
-                <h3>{h.name}</h3>
-                <p>Key: {h.key}</p>
-              </div>
-            ))}
+            <div className="form-group">
+              <label>Description</label>
+              <input
+                type="text"
+                placeholder="Groceries, rent, utilities..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
 
-            <button
-              className="ghost-button"
-              onClick={() => navigate("/")}
-            >
-              Back Home
+            <div className="form-group">
+              <label>Amount</label>
+              <input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Category</label>
+              <select
+                className="form-select"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="Rent">Rent</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Groceries">Groceries</option>
+                <option value="Subscriptions">Subscriptions</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <button className="primary-button" onClick={addExpense}>
+              Add Expense
+            </button>
+
+            <div className="household-card">
+              <h3>Total Expenses</h3>
+              <p>${total.toFixed(2)}</p>
+            </div>
+
+            {loading ? (
+              <p>Loading expenses...</p>
+            ) : expenses.length === 0 ? (
+              <p>No expenses yet.</p>
+            ) : (
+              expenses.map((expense) => (
+                <div className="household-card expense-card" key={expense.expenseId}>
+                  <h3>{expense.description || "Untitled Expense"}</h3>
+                  <p>Amount: ${Number(expense.amount).toFixed(2)}</p>
+                  <p>Category: {expense.category}</p>
+                  <p>Split: {expense.splitType}</p>
+                  <button
+                    className="ghost-button"
+                    onClick={() => deleteExpense(expense.expenseId)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))
+            )}
+
+            <button className="ghost-button" onClick={() => navigate("/households")}>
+              Back to Households
             </button>
           </div>
         </div>
@@ -378,6 +599,7 @@ function App() {
         <Route path="/create" element={<CreateHouseholdPage />} />
         <Route path="/join" element={<JoinHouseholdPage />} />
         <Route path="/households" element={<MyHouseholdsPage />} />
+        <Route path="/expenses/:householdId" element={<ExpensesPage />} />
         <Route path="/about" element={<AboutPage />} />
       </Routes>
     </Router>
