@@ -315,7 +315,7 @@ function AboutPage() {
     {
       name: "Jillian",
       role: "Database & API Integration",
-      email: "jillian@email.com",
+      email: "jillian.kivelier@gmail.com",
       phone: "(123) 456-7890",
     },
     {
