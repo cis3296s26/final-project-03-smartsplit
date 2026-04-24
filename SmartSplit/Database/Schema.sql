@@ -7,7 +7,8 @@ CREATE TABLE User (
 CREATE TABLE Household (
   householdId VARCHAR(36) PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  address VARCHAR(255)
+  address VARCHAR(255),
+  householdKey VARCHAR(20) UNIQUE
 );
 
 -- Many-to-many: users can belong to multiple households
@@ -30,6 +31,9 @@ CREATE TABLE Lease (
   FOREIGN KEY (householdId) REFERENCES Household(householdId),
   FOREIGN KEY (templateId) REFERENCES RentTemplate(templateId)
 );
+
+ALTER TABLE Household
+ADD householdKey VARCHAR2(20) UNIQUE;
 
 CREATE TABLE Expense (
   expenseId VARCHAR(36) PRIMARY KEY,

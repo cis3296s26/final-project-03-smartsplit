@@ -336,3 +336,22 @@ button:active {
   height: 22px;
   object-fit: contain;
 }
+
+.clickable-card {
+  cursor: pointer;
+}
+
+.form-select {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.expense-card button {
+  margin-top: 10px;
+}
