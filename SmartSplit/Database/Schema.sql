@@ -19,13 +19,6 @@ CREATE TABLE HouseholdMember (
   FOREIGN KEY (householdId) REFERENCES Household(householdId)
 );
 
-CREATE TABLE RentTemplate (
-  templateId VARCHAR(36) PRIMARY KEY,
-  name VARCHAR(100),
-  splitType ENUM('Equal', 'Percentage', 'Custom') NOT NULL,
-  householdId VARCHAR(36),
-  FOREIGN KEY (householdId) REFERENCES Household(householdId)
-);
 
 CREATE TABLE Lease (
   leaseId VARCHAR(36) PRIMARY KEY,
@@ -69,18 +62,6 @@ CREATE TABLE Payment (
   processed BOOLEAN DEFAULT FALSE,
   FOREIGN KEY (payerId) REFERENCES User(userId),
   FOREIGN KEY (receiverId) REFERENCES User(userId),
-  FOREIGN KEY (householdId) REFERENCES Household(householdId)
-);
-
-CREATE TABLE Notification (
-  notificationId VARCHAR(36) PRIMARY KEY,
-  message VARCHAR(255),
-  amount DECIMAL(10,2),
-  dueDate DATE,
-  isRead BOOLEAN DEFAULT FALSE,
-  userId VARCHAR(36),
-  householdId VARCHAR(36),
-  FOREIGN KEY (userId) REFERENCES User(userId),
   FOREIGN KEY (householdId) REFERENCES Household(householdId)
 );
 
