@@ -387,40 +387,58 @@ function UserHouseholdPage() {
     const location = useLocation();
     const data = location.state;
     const [payments, setPayments] = useState(null);
-
+    const nameFromId = async (id) => {
+        try {
+           const params = {id: id}; 
+            const ps = await fetch(`http://localhost:5001/roommate?${new URLSearchParams(params).toString()}`);
+            return (await ps.json()).name;
+        } catch(error) {
+            console.error(error);
+        }
+    }
     const loadPayments =   async () => {
         try { 
             const params = {key: data.household.key}
             const ps = await fetch(`http://localhost:5001/household/payments?${new URLSearchParams(params).toString()}`)
-            setPayments(await ps.json());
+            if(!ps.ok) {
+                console.error("issue with db request");
+                return;
+            }
+            const raw_payments =  await ps.json();
+            if(raw_payments) {
+                raw_payments.forEach(payment => {
+                    payment.roommateName = nameFromId(payment.roommateId);
+                });
+            }
+            setPayments(raw_payments);
         } catch(error) {
             console.error(error);
         }
     };
 
-    const nameFromId = async () => {
-        
-    }
+    
 
     useEffect( () => {
         loadPayments()
     }, []);
+
     const DrawPayments = () => {
         if(!payments || payments.length == 0) {
             return
         }
-        console.log("hi");
-        console.log(payments.body);
         const paymentList = payments.map(payment => 
-            <li> ID: {payment.id} amount: ${payment.total} description: {payment.description} </li>
+            <div> Roommate: {payment.roommateName} | {payment.total > 0? `+$${payment.total}` : `-$${Math.abs(payment.total)}`} | Reason: {payment.description} </div>
         );
-       return (<ul>{paymentList}</ul> );
+       return (<div>{paymentList}</div>);
     }
     return (
         <div className="App">
         <div className="App-header">
         <p> Welcome to your household {data.name} </p>
         <DrawPayments />
+        <div>
+        <button className="primary-button">Add Payment</button> 
+        </div>
         </div>
         </div>
 
