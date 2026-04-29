@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation} from "react-router-dom";
 import "./App.css";
 import aboutIcon from "./images/about.jpeg";
 
@@ -221,9 +221,9 @@ function JoinHouseholdPage() {
     });
     if(res.ok) {
         // Collects a json object that represents a row in the db
-        const user_household_row = await res.json()
+        const userHouseholdRow = await res.json()
+        navigate("/household", {state: {household: userHouseholdRow, name: memberName}});
     }
-    navigate("/households");
   };
 
   return (
@@ -383,18 +383,64 @@ function AboutPage() {
   );
 }
 
+function UserHouseholdPage() {
+    const location = useLocation();
+    const data = location.state;
+    const [payments, setPayments] = useState(null);
+
+    const loadPayments =   async () => {
+        try { 
+            const params = {key: data.household.key}
+            const ps = await fetch(`http://localhost:5001/household/payments?${new URLSearchParams(params).toString()}`)
+            setPayments(await ps.json());
+        } catch(error) {
+            console.error(error);
+        }
+    };
+
+    const nameFromId = async () => {
+        
+    }
+
+    useEffect( () => {
+        loadPayments()
+    }, []);
+    const DrawPayments = () => {
+        if(!payments || payments.length == 0) {
+            return
+        }
+        console.log("hi");
+        console.log(payments.body);
+        const paymentList = payments.map(payment => 
+            <li> ID: {payment.id} amount: ${payment.total} description: {payment.description} </li>
+        );
+       return (<ul>{paymentList}</ul> );
+    }
+    return (
+        <div className="App">
+        <div className="App-header">
+        <p> Welcome to your household {data.name} </p>
+        <DrawPayments />
+        </div>
+        </div>
+
+    )
+
+}
+
 function App() {
-  return (
-    <Router>
-      <Routes>
+    return (
+        <Router>
+        <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/create" element={<CreateHouseholdPage />} />
         <Route path="/join" element={<JoinHouseholdPage />} />
         <Route path="/households" element={<MyHouseholdsPage />} />
         <Route path="/about" element={<AboutPage />} />
-      </Routes>
-    </Router>
-  );
+        <Route path="/household" element={<UserHouseholdPage />} />
+        </Routes>
+        </Router>
+    );
 }
 
 export default App;

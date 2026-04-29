@@ -14,6 +14,8 @@ generated as prisma is installed
 
 
 ```
-npm run 
+npx prisma migrate
+npx prisma generate
+node script.js
  ```
 

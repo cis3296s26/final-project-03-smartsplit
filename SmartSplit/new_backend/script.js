@@ -53,6 +53,24 @@ app.post("/household/create", async (req,res,next) => {
     }
 })
 
+app.get("/household/payments", async (req, res) =>  {
+    const key = req.query.key;
+    console.log("queried payments");
+    try {
+    const result = await prisma.household.findUnique( {
+        where: {key: key},
+        include: {
+            payments: true,
+        }
+    });
+        console.log(result);
+        return res.json(result.payments);
+    } catch(error) {
+        console.error(error);
+        return res.status(500).send("Could not query for payments");
+    }
+});
+
 // Request to join household
 // format req ={key: , name:} (name is roommate name)
 app.post("/household/join", async (req,res,next) => {
