@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Household {
+  id            Int        @id @default(autoincrement())
+  key           String     @unique
+  name          String
+  roommateCount Int
+  roommates     Roommate[]
+  payments      Payment[]
+}
+
+model Roommate {
+  id          Int        @id @default(autoincrement())
+  name        String
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId Int?
+  payments    Payment[]
+}
+
+model Payment {
+  id          Int        @id @default(autoincrement())
+  total       Int
+  description String
+  roommate    Roommate   @relation(fields: [roommateId], references: [id])
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId Int?
+  roommateId  Int
+}

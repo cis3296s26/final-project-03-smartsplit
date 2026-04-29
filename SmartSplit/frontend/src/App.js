@@ -102,8 +102,9 @@ function CreateHouseholdPage() {
       roommateNames,
     };
 
+
     try {
-      const res = await fetch("http://127.0.0.1:5001/households", {
+      const res = await fetch("http://localhost:5001/household/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -119,6 +120,7 @@ function CreateHouseholdPage() {
       }
     } catch (e) {
       console.error(e);
+        console.log(JSON.stringify(payload));
       alert("Network error: could not reach backend");
     }
   };
@@ -210,6 +212,17 @@ function JoinHouseholdPage() {
 
   
     alert(`Joining household ${householdKey} as ${memberName}`);
+
+    const payload = {key: householdKey, name: memberName}
+    const res = await fetch("http://localhost:5001/household/join", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+    if(res.ok) {
+        // Collects a json object that represents a row in the db
+        const user_household_row = await res.json()
+    }
     navigate("/households");
   };
 
@@ -327,8 +340,8 @@ function AboutPage() {
     {
       name: "Nate",
       role: "Backend/API",
-      email: "nate@email.com",
-      phone: "(123) 456-7890",
+      email: "nate.harris@temple.edu",
+      phone: "(973)-567-9642",
     },
   ];
 
