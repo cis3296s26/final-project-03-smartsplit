@@ -9,13 +9,13 @@ SmartSplit is a web application that helps college roommates efficiently navigat
   - MySQL
 1. Clone the repo using command  
 ```
-git clone https://github.com/yourusername/smartsplit.git
-cd smartsplit 
+git clone https://github.com/cis3296s26/final-project-03-smartsplit/
+cd SmartSplit 
 ```
 2. Install dependencies
 - Backend
 ```
-cd backend
+cd new_backend
 npm install
 ```
 - Frontend
@@ -23,16 +23,10 @@ npm install
 cd ../frontend
 npm install
 ```
-3. Set up the database
-- Use the file provided named schema.sql, make sure MySQL is running, then run:
-```
-SOURCE schema.sql;
-```
 This will automatically create the SmartSplit database and tables.
 4. Run the backend
 ```
-cd ../backend
-node server.js
+Follow the README in the backend file to quickstart
 ```
 5. Run the frontend
 ```
