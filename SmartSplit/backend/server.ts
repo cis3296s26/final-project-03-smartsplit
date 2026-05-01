@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import userRoutes from './routes/users';
-import householdRoutes from './routes/households';
+import householdRoutes from './routes/household';
 import expenseRoutes from './routes/expenses';
 
 const app = express();
@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/users', userRoutes);
-app.use('/api/households', householdRoutes);
+app.use('/api/household', householdRoutes);
 app.use('/api/expenses', expenseRoutes);
 
 const PORT = process.env.PORT || 5001;

@@ -26,6 +26,90 @@ const prisma = new PrismaClient({adapter});
 app.get("/", (req,res) => {
     res.send('Hello world');
 })
+
+// Lists all households with member counts (consumed by MyHouseholdsPage)
+app.get("/api/households", async (req, res) => {
+    try {
+        const households = await prisma.household.findMany({
+            include: { _count: { select: { roommates: true } } }
+        });
+        const result = households.map(h => ({
+            householdId: h.id,
+            name: h.name,
+            householdKey: h.key,
+            memberCount: h._count.roommates,
+        }));
+        return res.json(result);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Could not query for households");
+    }
+});
+
+// Get all expenses for a household by id (consumed by ExpensesPage)
+app.get("/api/expenses/household/:householdId", async (req, res) => {
+    try {
+        const householdId = parseInt(req.params.householdId);
+        if (Number.isNaN(householdId)) {
+            return res.status(400).send("Invalid householdId");
+        }
+        const expenses = await prisma.expense.findMany({ where: { householdId } });
+        const result = expenses.map(e => ({
+            expenseId: e.id,
+            description: e.description,
+            amount: e.total,
+            // schema has no category/splitType columns yet; surface placeholders so
+            // the frontend renders without crashing.
+            category: "Other",
+            splitType: "Even",
+        }));
+        return res.json(result);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Could not query for expenses");
+    }
+});
+
+// Create an expense (consumed by ExpensesPage)
+app.post("/api/expenses", async (req, res) => {
+    try {
+        const { description, amount, householdId } = req.body || {};
+        if (!description || amount === undefined || !householdId) {
+            return res.status(400).json({ error: "description, amount, householdId required" });
+        }
+        const created = await prisma.expense.create({
+            data: {
+                total: parseInt(amount),
+                description,
+                householdId: parseInt(householdId),
+            },
+        });
+        return res.status(201).json({
+            expenseId: created.id,
+            description: created.description,
+            amount: created.total,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Could not create expense" });
+    }
+});
+
+// Delete an expense (consumed by ExpensesPage)
+app.delete("/api/expenses/:expenseId", async (req, res) => {
+    try {
+        const id = parseInt(req.params.expenseId);
+        if (Number.isNaN(id)) {
+            return res.status(400).send("Invalid expenseId");
+        }
+        await prisma.expense.delete({ where: { id } });
+        return res.status(204).send();
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Could not delete expense");
+    }
+});
+
 // Gets payments using householdKey
 app.get("/household/payments", async (req, res) =>  {
     const key = req.query.key;

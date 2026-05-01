@@ -4,7 +4,10 @@
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "ts-node server.ts",
+    "build": "tsc",
+    "start:built": "node dist/server.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
@@ -12,5 +15,12 @@
     "express": "^5.2.1",
     "oracledb": "^6.10.0",
     "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
   }
 }
