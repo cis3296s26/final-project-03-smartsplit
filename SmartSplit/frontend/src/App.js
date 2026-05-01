@@ -222,9 +222,10 @@ function JoinHouseholdPage() {
     if(res.ok) {
         // Collects a json object that represents a row in the db
         const userHouseholdRow = await res.json()
-        navigate("/household", {state: {household: userHouseholdRow, name: memberName}});
+        navigate("/household", {state: {key: userHouseholdRow.key, name: memberName, householdId: userHouseholdRow.id}});
     }
   };
+
 
   return (
     <div className="App">
@@ -385,9 +386,16 @@ function AboutPage() {
 
 function UserHouseholdPage() {
     const location = useLocation();
+    const navigate = useNavigate();
     const data = location.state;
+    
     const [payments, setPayments] = useState(null);
-    const nameFromId = async (id) => {
+    const [expenses, setExpenses] = useState(null);
+    const [paidTotal, setPaid] = useState(0);
+    const [owedTotal, setOwed] = useState(0);
+    const [showPayment, setShowPayment] = useState(true)
+    
+      const nameFromId = async (id) => {
         try {
            const params = {id: id}; 
             const ps = await fetch(`http://localhost:5001/roommate?${new URLSearchParams(params).toString()}`);
@@ -397,8 +405,11 @@ function UserHouseholdPage() {
         }
     }
     const loadPayments =   async () => {
-        try { 
-            const params = {key: data.household.key}
+        try {
+            if(!data.key) {
+                return
+            } 
+            const params = {key: data.key}
             const ps = await fetch(`http://localhost:5001/household/payments?${new URLSearchParams(params).toString()}`)
             if(!ps.ok) {
                 console.error("issue with db request");
@@ -408,9 +419,32 @@ function UserHouseholdPage() {
             if(raw_payments) {
                 raw_payments.forEach(payment => {
                     payment.roommateName = nameFromId(payment.roommateId);
+                    setPaid(payment.total + paidTotal);
                 });
             }
             setPayments(raw_payments);
+        } catch(error) {
+            console.error(error);
+        }
+    };
+    const loadExpenses = async () => {
+         try { 
+            if(!data.key) {
+                return
+            }
+            const params = {key: data.key}
+            const es = await fetch(`http://localhost:5001/household/expenses?${new URLSearchParams(params).toString()}`)
+            if(!es.ok) {
+                console.error("issue with db request");
+                return;
+            }
+            const qExpenses =  await es.json();
+            if(qExpenses) {
+                qExpenses.forEach(expense => {
+                    setOwed(expense.total + owedTotal);
+                });
+            }
+            setExpenses(qExpenses);
         } catch(error) {
             console.error(error);
         }
@@ -419,32 +453,289 @@ function UserHouseholdPage() {
     
 
     useEffect( () => {
+        if(!location.state?.name || !location.state?.householdId) {
+        navigate("/");
+    } 
+    if(!location.state?.key) {
+        navigate("/");
+    }
+    }, [location.state, navigate]);
+
+    useEffect( () => {
         loadPayments()
-    }, []);
+     }, []
+    );
+
+    useEffect( () => {
+        loadExpenses()
+     }, []
+    ); 
 
     const DrawPayments = () => {
         if(!payments || payments.length == 0) {
-            return
+            return (<div> No payments </div>)
         }
         const paymentList = payments.map(payment => 
-            <div> Roommate: {payment.roommateName} | {payment.total > 0? `+$${payment.total}` : `-$${Math.abs(payment.total)}`} | Reason: {payment.description} </div>
+            <div> Roommate: {payment.roommateName} | ${payment.total} | Reason: {payment.description} </div>
         );
-       return (<div>{paymentList}</div>);
+       return (<div>Payments:{paymentList}</div>);
+    }
+    const DrawExpenses = () => {
+        if(!expenses || expenses.length == 0) {
+            return (<div> No expenses </div>)
+        }
+        const expenseList = expenses.map(expense => 
+            <div> ${expense.total} | Reason: {expense.description} </div>
+        );
+        return (<div>Expenses:{expenseList}</div>);
+    }
+    
+    return (
+        <div className="App">
+        <div className="App-header">
+        <p> Welcome to your household {data?.name} </p>
+        <div>
+        <button className="primary-button" onClick={() => navigate("/household/payment", {state: data})}>Add Payment</button> 
+        <button className="primary-button" onClick={() => navigate("/household/expense", {state: data})}>Add Expense</button> 
+        </div>
+        <div>
+        <button className="primary-button" onClick={() => setShowPayment(true)}> View Payments </button>
+        <button className="primary-button" onClick={() => setShowPayment(false)}> View Expenses </button>
+        {showPayment? <DrawPayments /> : <DrawExpenses /> }
+        </div>
+        </div>
+        </div>
+    )
+}
+
+function CreatePayment() {
+ const [amount, setAmount] = useState(0);
+    const [description, setDescription] = useState("");
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
+
+
+    useEffect( () => {
+        if(!location.state?.name) {
+        navigate("/");
+    } 
+    if(!location.state?.key) {
+        navigate("/");
+    }
+    }, [location.state, navigate]);
+
+
+    const [roommate, setRoommate] = useState(null);
+       const handleCreatePayment = async () => {
+    if (!amount || !description) {
+      alert("Please provide an amount and description");
+      return;
+    }
+    // get current roommate
+    try {
+    const res = await fetch(`http://localhost:5001/household/roommates?key=${location.state.key}`);
+        if(!res.ok){
+        alert("Failed to get roommate list");
+        return
+    }
+    const roommates = await res.json()
+    console.log(roommates);
+
+    const roommate = roommates.filter(roommate =>  roommate.name == location.state.name)[0];
+    console.log(roommate);
+    const payload = {
+        roommateId: roommate.id,
+        description: description,
+        amount:  parseInt(amount),
+        key: location.state.key,
+        houesholdId: location.state.householdId
+    }
+    console.log(payload);
+    try {
+      const res = await fetch("http://localhost:5001/household/payment/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert("Payment created (id: " + data.id + ")");
+        navigate("/household", {state: location.state});
+      } else {
+        const err = await res.json().catch(() => null);
+        alert("Create failed: " + (err?.error || res.statusText));
+      }
+    } catch (e) {
+      console.error(e);
+        console.log(JSON.stringify(payload));
+      alert("Network error: could not reach backend");
+    }
+
+    }
+    catch(error) {
+        console.error("failed to grab roommates: ", error);
+        return
+    }
+      };
+    
+    
+
+
+
+
+
+    return (
+        <div className="App">
+        <div className="App-header">
+        <div className="page-card">
+        <h1 className="page-title">Create Payment</h1>
+        <p className="page-subtitle">
+        Create new payment for your household
+        </p>
+
+        <div className="create-container">
+        <div className="form-group">
+        <label>Payment Description</label>
+        <input
+        type="text"
+        placeholder="Enter reason for payment"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        />
+        </div>
+
+        <div className="form-group">
+        <label>Amount</label>
+        <input
+        type="number"
+        min="0.01"
+        placeholder="Enter payment"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        />
+        </div>
+
+
+        <div className="button-row">
+        <button className="primary-button" onClick={() => handleCreatePayment()}>
+        Create
+        </button>
+        <button className="ghost-button" onClick={() => navigate("/household", {state: location.state})}>
+        Cancel
+        </button>
+        </div>
+        </div>
+        </div>
+        </div>
+        </div>
+    );
+}
+
+function CreateExpense() {
+    
+    const [amount, setAmount] = useState(0);
+    const [description, setDescription] = useState("");
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
+
+
+    useEffect( () => {
+        if(!location.state?.name) {
+        navigate("/");
+    } 
+    if(!location.state?.key) {
+        navigate("/");
+    }
+    }, [location.state, navigate]);
+
+
+    const handleCreateExpense = async () => {
+    if (!amount || !description) {
+      alert("Please provide an amount and description");
+      return;
+    }
+
+    const payload = {
+        description: description,
+        amount:  parseInt(amount),
+        key: location.state.key,
+        houesholdId: location.state.householdId
+    }
+    console.log(payload);
+    try {
+      const res = await fetch("http://localhost:5001/household/expense/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert("Expense created (id: " + data.id + ")");
+        navigate("/household", {state: location.state});
+      } else {
+        const err = await res.json().catch(() => null);
+        alert("Create failed: " + (err?.error || res.statusText));
+      }
+    } catch (e) {
+      console.error(e);
+        console.log(JSON.stringify(payload));
+      alert("Network error: could not reach backend");
+    }
     }
     return (
         <div className="App">
         <div className="App-header">
-        <p> Welcome to your household {data.name} </p>
-        <DrawPayments />
-        <div>
-        <button className="primary-button">Add Payment</button> 
-        </div>
-        </div>
+        <div className="page-card">
+        <h1 className="page-title">Create Expense</h1>
+        <p className="page-subtitle">
+        Create new expense for your household
+        </p>
+
+        <div className="create-container">
+        <div className="form-group">
+        <label>Payment Description</label>
+        <input
+        type="text"
+        placeholder="Enter reason for expense"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        />
         </div>
 
-    )
+        <div className="form-group">
+        <label>Amount</label>
+        <input
+        type="number"
+        min="0.01"
+        placeholder="Enter payment"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        />
+        </div>
+
+
+        <div className="button-row">
+        <button className="primary-button" onClick={() => handleCreateExpense()}>
+        Create
+        </button>
+        <button className="ghost-button" onClick={() => navigate("/household", {state: location.state})}>
+        Cancel
+        </button>
+        </div>
+        </div>
+        </div>
+        </div>
+        </div>
+    );
 
 }
+
 
 function App() {
     return (
@@ -456,6 +747,8 @@ function App() {
         <Route path="/households" element={<MyHouseholdsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/household" element={<UserHouseholdPage />} />
+        <Route path="/household/payment" element={<CreatePayment />} />
+        <Route path="/household/expense" element={<CreateExpense />} />
         </Routes>
         </Router>
     );

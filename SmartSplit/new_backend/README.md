@@ -5,6 +5,8 @@
 npm install
 npx prisma
 npx prisma init
+
+// Skip this next one if you already have a database.
 npx create-db
 ```
 After creating the database with the command add the connection string
@@ -14,7 +16,7 @@ generated as prisma is installed
 
 
 ```
-npx prisma migrate
+npx prisma migrate dev
 npx prisma generate
 node script.js
  ```
